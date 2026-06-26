@@ -28,7 +28,7 @@
 //   t->PostTask(q);
 //   t->Wait();
 // =============================================================================
-
+#include <wx/wx.h>
 #include <wx/thread.h>
 #include <deque>
 #include <string>
