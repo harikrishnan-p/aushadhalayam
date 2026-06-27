@@ -99,14 +99,14 @@ void MainFrame::BuildLayout() {
     wxBoxSizer* outer = new wxBoxSizer(wxHORIZONTAL);
 
     std::vector<NavEntry> nav_entries = {
-        {"Dashboard",  "MAIN",     PAGE_DASHBOARD},
-        {"Billing",    "",         PAGE_BILLING},
-        {"Inventory",  "",         PAGE_INVENTORY},
-        {"Medicines",  "",         PAGE_MEDICINES},
-        {"Purchase",   "REPORTS",  PAGE_PURCHASE},
-        {"Sales",      "",         PAGE_SALES},
-        {"Customers",  "",         PAGE_CUSTOMERS},
-        {"Settings",   "ACCOUNT",  PAGE_SETTINGS},
+        {"Dashboard", "MAIN",    PAGE_DASHBOARD,  ICON_DASHBOARD},
+        {"Billing",   "",        PAGE_BILLING,    ICON_BILLING},
+        {"Inventory", "STORE",   PAGE_INVENTORY,  ICON_INVENTORY},
+        {"Medicines", "",        PAGE_MEDICINES,  ICON_MEDICINES},
+        {"Purchase",  "",        PAGE_PURCHASE,   ICON_PURCHASE},
+        {"Sales",     "REPORTS", PAGE_SALES,      ICON_SALES},
+        {"Customers", "",        PAGE_CUSTOMERS,  ICON_CUSTOMERS},
+        {"Settings",  "SYSTEM",  PAGE_SETTINGS,   ICON_SETTINGS},
     };
     m_sidebar = new SidebarPanel(root_panel, nav_entries, PAGE_DASHBOARD);
     outer->Add(m_sidebar, 0, wxEXPAND);

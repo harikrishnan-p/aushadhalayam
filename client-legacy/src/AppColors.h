@@ -36,10 +36,11 @@ inline wxColour Danger()     { return wxColour(220,  38,  38); }  // #dc2626
 inline wxColour DangerBg()   { return wxColour(254, 226, 226); }  // #fee2e2
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
-inline wxColour SidebarBg()     { return wxColour(30,  41,  59); }  // #1e293b
-inline wxColour SidebarText()   { return wxColour(148, 163, 184); } // #94a3b8
-inline wxColour SidebarActBg()  { return wxColour(37,  99, 235); }  // #2563eb
-inline wxColour SidebarActTxt() { return wxColour(255, 255, 255); } // #fff
+inline wxColour SidebarBg()      { return wxColour(30,  41,  59); }  // #1e293b
+inline wxColour SidebarHoverBg() { return wxColour(51,  65,  85); }  // #334155 slate-700
+inline wxColour SidebarText()    { return wxColour(148, 163, 184); } // #94a3b8
+inline wxColour SidebarActBg()   { return wxColour(37,  99, 235); }  // #2563eb
+inline wxColour SidebarActTxt()  { return wxColour(255, 255, 255); } // #fff
 
 // ── Schedule pills (background, foreground) ───────────────────────────────────
 // OTC: green, H: amber, H1: orange, X: red
