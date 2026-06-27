@@ -109,6 +109,16 @@ set(APP_SOURCES
     src/WorkerThread.cpp
     src/BillingGrid.cpp
     src/PrinterManager.cpp
+    src/SidebarPanel.cpp
+    src/ChartPanel.cpp
+    src/DashboardPage.cpp
+    src/BillingPage.cpp
+    src/InventoryPage.cpp
+    src/MedicinesPage.cpp
+    src/PurchasePage.cpp
+    src/SalesPage.cpp
+    src/CustomersPage.cpp
+    src/SettingsPage.cpp
 )
 # DatabaseManager.{h,cpp} is kept as a utility reference but is intentionally
 # excluded from the build — WorkerThread.cpp uses the raw SQLite C API directly.

@@ -234,6 +234,18 @@ wxThread::ExitCode PharmacyWorkerThread::Entry() {
                 case DbCommandType::CMD_GET_LOW_STOCK:
                     result = HandleGetLowStock(task.payload);
                     break;
+                case DbCommandType::CMD_SEARCH_CUSTOMER:
+                    result = HandleSearchCustomer(task.payload);
+                    break;
+                case DbCommandType::CMD_GET_INVENTORY:
+                    result = HandleGetInventory(task.payload);
+                    break;
+                case DbCommandType::CMD_SEARCH_MEDICINE:
+                    result = HandleSearchMedicine(task.payload);
+                    break;
+                case DbCommandType::CMD_GET_PERIOD_SALES:
+                    result = HandleGetPeriodSales(task.payload);
+                    break;
                 default:
                     ok = false;
                     result = "Unknown command";
@@ -677,6 +689,86 @@ std::string PharmacyWorkerThread::HandleGetLowStock(const std::string& /*json*/)
             {"name",          jsonutil::make_str(st.col_text(2))},
             {"reorder_level", std::to_string(st.col_int(3))},
             {"total_stock",   std::to_string((int)st.col_int64(4))},
+        }));
+    }
+    return jsonutil::make_arr(rows);
+}
+
+// ── New command handlers ──────────────────────────────────────────────────────
+
+std::string PharmacyWorkerThread::HandleSearchCustomer(const std::string& json) {
+    std::string query = jsonutil::extract_str(json, "query");
+    const char* sql =
+        "SELECT id, name, phone, address, COALESCE(gstin,'') FROM customers"
+        " WHERE is_deleted=0 AND (name LIKE ?1 OR phone LIKE ?1)"
+        " ORDER BY name LIMIT 20;";
+    std::string pattern = "%" + query + "%";
+    std::vector<std::string> rows;
+    Stmt st(m_db, sql);
+    if (!st.ok()) return "[]";
+    st.bind_text(1, pattern);
+    while (st.step() == SQLITE_ROW) {
+        rows.push_back(jsonutil::make_obj({
+            {"id",      std::to_string((int)st.col_int64(0))},
+            {"name",    jsonutil::make_str(st.col_text(1))},
+            {"phone",   jsonutil::make_str(st.col_text(2))},
+            {"address", jsonutil::make_str(st.col_text(3))},
+            {"gstin",   jsonutil::make_str(st.col_text(4))},
+        }));
+    }
+    return jsonutil::make_arr(rows);
+}
+
+std::string PharmacyWorkerThread::HandleGetInventory(const std::string& /*json*/) {
+    const char* sql =
+        "SELECT sb.id, sb.batch_number, sb.expiry_date, sb.quantity,"
+        "       sb.mrp, sb.purchase_rate, p.name, p.sku"
+        " FROM stock_batches sb"
+        " JOIN products p ON p.id = sb.product_id"
+        " WHERE sb.is_deleted=0 AND p.is_deleted=0"
+        " ORDER BY p.name ASC, sb.expiry_date ASC LIMIT 200;";
+    std::vector<std::string> rows;
+    Stmt st(m_db, sql);
+    if (!st.ok()) return "[]";
+    while (st.step() == SQLITE_ROW) {
+        double mrp = st.col_double(4), pr = st.col_double(5);
+        double mg = (mrp > 0) ? (mrp - pr) / mrp * 100.0 : 0.0;
+        char mbuf[16]; std::snprintf(mbuf, sizeof(mbuf), "%.1f", mg);
+        rows.push_back(jsonutil::make_obj({
+            {"id",            std::to_string((int)st.col_int64(0))},
+            {"batch_number",  jsonutil::make_str(st.col_text(1))},
+            {"expiry_date",   jsonutil::make_str(st.col_text(2))},
+            {"quantity",      std::to_string(st.col_int(3))},
+            {"mrp",           std::to_string(mrp)},
+            {"purchase_rate", std::to_string(pr)},
+            {"product_name",  jsonutil::make_str(st.col_text(6))},
+            {"sku",           jsonutil::make_str(st.col_text(7))},
+            {"margin",        mbuf},
+        }));
+    }
+    return jsonutil::make_arr(rows);
+}
+
+std::string PharmacyWorkerThread::HandleSearchMedicine(const std::string& json) {
+    return HandleSearchProduct(json);
+}
+
+std::string PharmacyWorkerThread::HandleGetPeriodSales(const std::string& json) {
+    std::string month = jsonutil::extract_str(json, "month");
+    const char* sql =
+        "SELECT strftime('%Y-%m-%d', bill_date) AS day,"
+        "       SUM(grand_total) AS total, COUNT(*) AS cnt"
+        " FROM bills WHERE is_cancelled=0 AND bill_date LIKE ?||'%'"
+        " GROUP BY day ORDER BY day;";
+    std::vector<std::string> rows;
+    Stmt st(m_db, sql);
+    if (!st.ok()) return "[]";
+    st.bind_text(1, month);
+    while (st.step() == SQLITE_ROW) {
+        rows.push_back(jsonutil::make_obj({
+            {"date",  jsonutil::make_str(st.col_text(0))},
+            {"total", std::to_string(st.col_double(1))},
+            {"count", std::to_string(st.col_int(2))},
         }));
     }
     return jsonutil::make_arr(rows);

@@ -54,6 +54,10 @@ enum class DbCommandType : int {
     CMD_CANCEL_BILL     = 4,   // payload: {"bill_id":N,"reason":"..."}
     CMD_FLUSH_SYNC      = 5,   // payload: {} → pending sync count JSON
     CMD_GET_LOW_STOCK   = 6,   // payload: {} → low-stock array JSON
+    CMD_SEARCH_CUSTOMER = 7,   // payload: {"query":"..."} → customer array JSON
+    CMD_GET_INVENTORY   = 8,   // payload: {} → all non-expired batches JSON
+    CMD_SEARCH_MEDICINE = 9,   // payload: {"query":"..."} → product+schedule JSON
+    CMD_GET_PERIOD_SALES= 10,  // payload: {"month":"YYYY-MM"} → daily totals JSON
     CMD_QUIT            = 99,
 };
 
@@ -106,8 +110,12 @@ private:
     std::string HandleGetStockBatch (const std::string& json);
     std::string HandleCheckout      (const std::string& json);
     std::string HandleCancelBill    (const std::string& json);
-    std::string HandleFlushSync     (const std::string& json);
-    std::string HandleGetLowStock   (const std::string& json);
+    std::string HandleFlushSync      (const std::string& json);
+    std::string HandleGetLowStock    (const std::string& json);
+    std::string HandleSearchCustomer (const std::string& json);
+    std::string HandleGetInventory   (const std::string& json);
+    std::string HandleSearchMedicine (const std::string& json);
+    std::string HandleGetPeriodSales (const std::string& json);
 
     // Post events back to the GUI thread (wxQueueEvent is thread-safe)
     void PostResult(long long request_id, const std::string& json);
