@@ -41,10 +41,10 @@ fn configure(conn: &Connection) -> Result<()> {
 /// Apply the ground-truth schema (all statements are idempotent — IF NOT EXISTS).
 /// In production, embed the SQL via include_str! so it ships in the binary.
 fn bootstrap_schema(conn: &Connection) -> Result<()> {
-    // Embed schema.sql at compile time from the shared docs/ directory.
-    // Path is relative to this file's crate root (src-tauri/).
-    // The symlink or copy of docs/schema.sql must live at src-tauri/schema.sql.
-    let schema = include_str!("../../schema.sql");
+    // Embed the canonical schema at compile time directly from docs/.
+    // include_str! paths are relative to the source file (src/db/mod.rs),
+    // so ../../../../docs/schema.sql resolves to <repo-root>/docs/schema.sql.
+    let schema = include_str!("../../../../docs/schema.sql");
     conn.execute_batch(schema)
         .context("Schema bootstrap failed")?;
     Ok(())

@@ -122,10 +122,10 @@ export default function Dashboard() {
                 </thead>
                 <tbody>
                   {alerts.map(a => (
-                    <tr key={a.product_id}>
-                      <td>{a.product_name}</td>
+                    <tr key={a.id}>
+                      <td>{a.name}</td>
                       <td>
-                        <span className="badge badge-red">{a.current_stock}</span>
+                        <span className="badge badge-red">{a.total_stock}</span>
                       </td>
                       <td className="text-2">{a.reorder_level}</td>
                     </tr>

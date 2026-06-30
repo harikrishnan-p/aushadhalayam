@@ -13,16 +13,18 @@ use tauri::State;
 
 #[derive(Debug, Serialize)]
 pub struct ProductSearchResult {
-    pub id:           i64,
-    pub sku:          String,
-    pub name:         String,
-    pub generic_name: Option<String>,
-    pub hsn_code:     String,
-    pub gst_rate:     f64,
-    pub unit:         String,
-    pub mrp:          f64,
-    pub is_scheduled: i32,
-    pub total_qty:    i64,
+    pub id:            i64,
+    pub sku:           String,
+    pub name:          String,
+    pub generic_name:  Option<String>,
+    pub manufacturer:  String,
+    pub hsn_code:      String,
+    pub gst_rate:      f64,
+    pub unit:          String,
+    pub mrp:           f64,
+    pub is_scheduled:  i32,
+    pub reorder_level: i64,
+    pub total_qty:     i64,
 }
 
 #[derive(Debug, Serialize)]
@@ -76,8 +78,9 @@ pub async fn search_products(
 
         let mut stmt = conn
             .prepare_cached(
-                "SELECT p.id, p.sku, p.name, p.generic_name, p.hsn_code,
-                        p.gst_rate, p.unit, p.mrp, p.is_scheduled,
+                "SELECT p.id, p.sku, p.name, p.generic_name, p.manufacturer,
+                        p.hsn_code, p.gst_rate, p.unit, p.mrp, p.is_scheduled,
+                        p.reorder_level,
                         COALESCE(SUM(sb.quantity),0) AS total_qty
                    FROM products p
                    LEFT JOIN stock_batches sb
@@ -94,16 +97,18 @@ pub async fn search_products(
         let results = stmt
             .query_map(rusqlite::params![pattern], |r| {
                 Ok(ProductSearchResult {
-                    id:           r.get(0)?,
-                    sku:          r.get(1)?,
-                    name:         r.get(2)?,
-                    generic_name: r.get(3)?,
-                    hsn_code:     r.get(4)?,
-                    gst_rate:     r.get(5)?,
-                    unit:         r.get(6)?,
-                    mrp:          r.get(7)?,
-                    is_scheduled: r.get(8)?,
-                    total_qty:    r.get(9)?,
+                    id:            r.get(0)?,
+                    sku:           r.get(1)?,
+                    name:          r.get(2)?,
+                    generic_name:  r.get(3)?,
+                    manufacturer:  r.get(4)?,
+                    hsn_code:      r.get(5)?,
+                    gst_rate:      r.get(6)?,
+                    unit:          r.get(7)?,
+                    mrp:           r.get(8)?,
+                    is_scheduled:  r.get(9)?,
+                    reorder_level: r.get(10)?,
+                    total_qty:     r.get(11)?,
                 })
             })
             .map_err(|e| e.to_string())?

@@ -1,30 +1,21 @@
 /**
  * Data access layer.
- * When running inside Tauri, calls `invoke` for supported commands.
- * Otherwise (browser dev / unsupported commands) falls back to mock data.
- *
- * Commands backed by Rust:  search_products, get_stock_batches,
- *   get_low_stock_alerts, process_checkout, cancel_bill,
- *   get_pending_sync_count, get_gstr1_b2c_summary,
- *   get_period_summary, get_gstr1_bill_details
- *
- * UI-only (mock only):  Customer CRUD, Purchase Orders, Doctors, Settings persistence
+ * Inside Tauri: calls invoke() which talks to the Rust backend.
+ * In a plain browser (npm run dev without tauri): falls back to mock data.
  */
 
+import { invoke as tauriInvoke } from "@tauri-apps/api/core";
 import type {
   Product, StockBatch, LowStockAlert, Customer,
   PeriodSummary, Gstr1B2cRow,
 } from "./types";
 import * as mock from "./mock";
 
-// Tauri invoke — exists only inside the desktop shell.
-async function invoke<T>(cmd: string, args?: unknown): Promise<T> {
-  const w = window as unknown as { __TAURI__?: { core: { invoke: (c: string, a?: unknown) => Promise<T> } } };
-  if (w.__TAURI__?.core?.invoke) {
-    return w.__TAURI__.core.invoke(cmd, args);
-  }
-  throw new Error(`tauri_unavailable:${cmd}`);
+async function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
+  return tauriInvoke<T>(cmd, args);
 }
+
+// ── Inventory ────────────────────────────────────────────────────────────────
 
 export async function searchProducts(query: string): Promise<Product[]> {
   try {
@@ -32,12 +23,12 @@ export async function searchProducts(query: string): Promise<Product[]> {
   } catch {
     return mock.products.filter(p =>
       p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.generic_name.toLowerCase().includes(query.toLowerCase())
+      (p.generic_name ?? "").toLowerCase().includes(query.toLowerCase())
     );
   }
 }
 
-export async function getStockBatches(productId: string): Promise<StockBatch[]> {
+export async function getStockBatches(productId: number): Promise<StockBatch[]> {
   try {
     return await invoke<StockBatch[]>("get_stock_batches", { product_id: productId });
   } catch {
@@ -53,25 +44,50 @@ export async function getLowStockAlerts(): Promise<LowStockAlert[]> {
   }
 }
 
+// ── Billing ──────────────────────────────────────────────────────────────────
+
+/** Shape must match Rust CheckoutRequest + CartItem exactly. */
 export interface CheckoutPayload {
-  customer_id?: string;
-  doctor_name?: string;
-  prescription_no?: string;
-  notes?: string;
-  payment_mode: string;
+  customer_name?:    string;
+  customer_id?:      number;
+  payment_mode:      string;
+  bill_discount_pct: number;
+  is_interstate:     boolean;
   items: {
-    product_id: string;
-    batch_id: string;
-    quantity: number;
+    product_id:   number;
+    batch_id:     number;
+    product_name: string;
+    hsn_code:     string;
+    batch_number: string;
+    expiry_date:  string;
+    quantity:     number;
+    mrp:          number;
     discount_pct: number;
+    gst_rate:     number;
   }[];
 }
 
-export async function processCheckout(payload: CheckoutPayload): Promise<{ bill_id: string }> {
+export interface BillResult {
+  bill_id:         number;
+  bill_number:     string;
+  grand_total:     number;
+  cgst_amount:     number;
+  sgst_amount:     number;
+  igst_amount:     number;
+}
+
+export async function processCheckout(payload: CheckoutPayload): Promise<BillResult> {
   try {
-    return await invoke<{ bill_id: string }>("process_checkout", payload);
+    return await invoke<BillResult>("process_checkout", { req: payload });
   } catch {
-    return { bill_id: `MOCK-${Date.now()}` };
+    return {
+      bill_id:     Date.now(),
+      bill_number: `MOCK-${Date.now()}`,
+      grand_total: 0,
+      cgst_amount: 0,
+      sgst_amount: 0,
+      igst_amount: 0,
+    };
   }
 }
 
@@ -82,6 +98,8 @@ export async function getPendingSyncCount(): Promise<number> {
     return 0;
   }
 }
+
+// ── GST Reports ──────────────────────────────────────────────────────────────
 
 export async function getPeriodSummary(month: string): Promise<PeriodSummary> {
   try {

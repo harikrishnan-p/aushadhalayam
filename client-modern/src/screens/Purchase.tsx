@@ -84,10 +84,10 @@ export default function Purchase() {
               return (
                 <tr key={b.id}>
                   <td className="fw-600">{prod?.name ?? b.product_id}</td>
-                  <td className="mono text-sm">{b.batch_no}</td>
+                  <td className="mono text-sm">{b.batch_number}</td>
                   <td>{b.expiry_date.slice(0, 7)}</td>
                   <td>{b.quantity}</td>
-                  <td>₹{b.purchase_rate.toFixed(2)}</td>
+                  <td>₹{b.purchase_price.toFixed(2)}</td>
                   <td>₹{b.mrp.toFixed(2)}</td>
                   <td><span className="badge badge-green">Received</span></td>
                 </tr>

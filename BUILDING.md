@@ -21,7 +21,6 @@ aushadhalayam/
     └── src-tauri/
         ├── Cargo.toml
         ├── build.rs
-        ├── schema.sql          # Copy of docs/schema.sql (embedded via include_str!)
         ├── tauri.conf.json
         └── src/
             ├── main.rs
@@ -158,17 +157,7 @@ npm run tauri icon -- path/to/your-app-icon-1024.png
 This creates `icons/32x32.png`, `icons/128x128.png`, `icons/icon.ico`, `icons/icon.icns`, etc.  
 You only need to do this once, or whenever you update the icon.
 
-### Step 2 — Keep schema in sync
-
-`client-modern/src-tauri/schema.sql` must be identical to `docs/schema.sql`.  
-The Rust binary embeds it at compile time via `include_str!`.
-
-```bash
-# From the repo root — run this whenever docs/schema.sql changes
-copy docs\schema.sql client-modern\src-tauri\schema.sql
-```
-
-### Step 3 — Install frontend dependencies
+### Step 2 — Install frontend dependencies
 
 ```bash
 cd client-modern

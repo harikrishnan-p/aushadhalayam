@@ -34,8 +34,8 @@ export default function Inventory() {
             </span>
             <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
               {alerts.map(a => (
-                <span key={a.product_id} className="badge badge-yellow">
-                  {a.product_name}: {a.current_stock} left
+                <span key={a.id} className="badge badge-yellow">
+                  {a.name}: {a.total_stock} left
                 </span>
               ))}
             </div>
@@ -69,18 +69,18 @@ export default function Inventory() {
           <tbody>
             {batches.map(b => {
               const prod = products.find(p => p.id === b.product_id);
-              const margin = ((b.mrp - b.purchase_rate) / b.mrp * 100).toFixed(1);
+              const margin = ((b.mrp - b.purchase_price) / b.mrp * 100).toFixed(1);
               return (
                 <tr key={b.id}>
-                  <td className="fw-600">{prod?.name ?? b.product_id}</td>
-                  <td className="mono text-sm">{b.batch_no}</td>
+                  <td className="fw-600">{prod?.name ?? `Product #${b.product_id}`}</td>
+                  <td className="mono text-sm">{b.batch_number}</td>
                   <td>
                     <span className={`badge ${expiryClass(b.expiry_date)}`}>
                       {expiryLabel(b.expiry_date)}
                     </span>
                   </td>
                   <td>₹{b.mrp.toFixed(2)}</td>
-                  <td>₹{b.purchase_rate.toFixed(2)}</td>
+                  <td>₹{b.purchase_price.toFixed(2)}</td>
                   <td>
                     <span className={b.quantity <= 10 ? "badge badge-red" : "badge badge-gray"}>
                       {b.quantity}

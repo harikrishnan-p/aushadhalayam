@@ -4,6 +4,7 @@ import {
 } from "@tabler/icons-react";
 import { searchProducts, getStockBatches, searchCustomers, processCheckout } from "../data/api";
 import type { BillItem, Customer, Product, Schedule, StockBatch } from "../data/types";
+import type { CheckoutPayload } from "../data/api";
 import { SCHEDULE_LABELS } from "./Medicines";
 
 const SCHEDULE_PILL: Record<Schedule, string> = {
@@ -162,17 +163,17 @@ export default function Billing() {
         return next;
       }
       const newItem: BillItem = {
-        product_id: p.id,
-        product_name: p.name,
-        is_scheduled: p.is_scheduled,
-        batch_id: b.id,
-        batch_no: b.batch_no,
-        expiry_date: b.expiry_date,
-        mrp: b.mrp,
-        quantity: 1,
-        discount_pct: 0,
-        gst_rate: p.gst_rate,
-        hsn_code: p.hsn_code,
+        product_id:       p.id,
+        product_name:     p.name,
+        is_scheduled:     p.is_scheduled,
+        batch_id:         b.id,
+        batch_number:     b.batch_number,
+        expiry_date:      b.expiry_date,
+        mrp:              b.mrp,
+        quantity:         1,
+        discount_pct:     0,
+        gst_rate:         p.gst_rate,
+        hsn_code:         p.hsn_code,
         available_batches: batches,
       };
       return [...prev, newItem];
@@ -189,8 +190,8 @@ export default function Billing() {
 
   const changeBatch = async (idx: number, batchId: string) => {
     const item = items[idx];
-    const b = item.available_batches.find(x => x.id === batchId);
-    if (b) updateItem(idx, { batch_id: b.id, batch_no: b.batch_no, expiry_date: b.expiry_date, mrp: b.mrp });
+    const b = item.available_batches.find(x => x.id === Number(batchId));
+    if (b) updateItem(idx, { batch_id: b.id, batch_number: b.batch_number, expiry_date: b.expiry_date, mrp: b.mrp });
   };
 
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
@@ -206,20 +207,26 @@ export default function Billing() {
   const checkout = async () => {
     if (items.length === 0) return;
     setProcessing(true);
-    const { bill_id } = await processCheckout({
-      customer_id: customer?.id,
-      doctor_name: doctor || undefined,
-      prescription_no: prescriptionNo || undefined,
-      notes: notes || undefined,
-      payment_mode: payMode,
+    const payload: CheckoutPayload = {
+      customer_name:     customer?.name,
+      payment_mode:      payMode,
+      bill_discount_pct: 0,
+      is_interstate:     false,
       items: items.map(i => ({
-        product_id: i.product_id,
-        batch_id: i.batch_id,
-        quantity: i.quantity,
+        product_id:   i.product_id,
+        batch_id:     i.batch_id,
+        product_name: i.product_name,
+        hsn_code:     i.hsn_code,
+        batch_number: i.batch_number,
+        expiry_date:  i.expiry_date,
+        quantity:     i.quantity,
+        mrp:          i.mrp,
         discount_pct: i.discount_pct,
+        gst_rate:     i.gst_rate,
       })),
-    });
-    setSuccess(bill_id);
+    };
+    const result = await processCheckout(payload);
+    setSuccess(result.bill_number);
     setItems([]);
     setDoctor("");
     setPrescriptionNo("");
@@ -287,7 +294,7 @@ export default function Billing() {
                         >
                           {item.available_batches.map(b => (
                             <option key={b.id} value={b.id}>
-                              {b.batch_no} ({b.expiry_date.slice(0, 7)})
+                              {b.batch_number} ({b.expiry_date.slice(0, 7)})
                             </option>
                           ))}
                         </select>
