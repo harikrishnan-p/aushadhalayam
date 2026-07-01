@@ -12,6 +12,7 @@ mod state;
 
 use state::{AppState, SyncTrigger};
 use std::path::PathBuf;
+use tauri::Manager;
 use tokio::sync::mpsc;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,48 +34,55 @@ fn load_or_create_device_id(data_dir: &PathBuf) -> String {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Resolve the local data directory (adjacent to the executable)
-// ─────────────────────────────────────────────────────────────────────────────
-fn data_dir() -> PathBuf {
-    std::env::current_exe()
-        .ok()
-        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
-        .unwrap_or_else(|| PathBuf::from("."))
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Application entry point
 // ─────────────────────────────────────────────────────────────────────────────
 fn main() {
-    let dir       = data_dir();
-    let db_path   = dir.join("pharmacy.db");
-    let device_id = load_or_create_device_id(&dir);
-
-    // Open SQLite connection (WAL configured inside db::open)
-    let conn = db::open(
-        db_path.to_str().expect("DB path contains non-UTF-8 chars"),
-        &device_id,
-    )
-    .expect("Cannot open database");
-
-    // The sender is stored in AppState; the receiver is consumed by the sync loop.
-    let (sync_tx, sync_rx) = mpsc::unbounded_channel::<SyncTrigger>();
-
-    let app_state = AppState::new(conn, sync_tx, device_id);
-    let db_arc    = app_state.db.clone();
-
-    let sync_endpoint = std::env::var("SYNC_ENDPOINT")
-        .unwrap_or_else(|_| "https://sync.aushadhalayam.local/api/ingest".to_string());
+    // In release builds the console is hidden, so route panics to a log file
+    // next to the exe so crashes are diagnosable without a debugger.
+    #[cfg(not(debug_assertions))]
+    {
+        let log_path = std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.join("crash.log")))
+            .unwrap_or_else(|| std::path::PathBuf::from("crash.log"));
+        std::panic::set_hook(Box::new(move |info| {
+            let msg = format!("{info}\n");
+            let _ = std::fs::write(&log_path, &msg);
+        }));
+    }
 
     // ── Tauri application ────────────────────────────────────────────────────
+    // NOTE: db path and device_id are resolved inside .setup() so we have
+    // access to Tauri's app_data_dir() — the correct writable location on
+    // every platform (%APPDATA%\com.aushadhalayam.pos on Windows).
     tauri::Builder::default()
-        .setup(move |_app| {
-            // Tauri owns the async runtime at this point.
-            // spawn_sync_agent calls tokio::spawn, which uses Tauri's runtime.
+        .setup(move |app| {
+            let dir = app
+                .path()
+                .app_data_dir()
+                .expect("Cannot resolve app data directory");
+            std::fs::create_dir_all(&dir).expect("Cannot create app data directory");
+
+            let db_path   = dir.join("pharmacy.db");
+            let device_id = load_or_create_device_id(&dir);
+
+            let conn = db::open(
+                db_path.to_str().expect("DB path contains non-UTF-8 chars"),
+                &device_id,
+            )
+            .expect("Cannot open database");
+
+            let sync_endpoint = std::env::var("SYNC_ENDPOINT")
+                .unwrap_or_else(|_| "https://sync.aushadhalayam.local/api/ingest".to_string());
+
+            let (sync_tx, sync_rx) = mpsc::unbounded_channel::<SyncTrigger>();
+            let app_state = AppState::new(conn, sync_tx, device_id);
+            let db_arc    = app_state.db.clone();
+
             db::sync::spawn_sync_agent(db_arc, sync_rx, sync_endpoint);
+            app.manage(app_state);
             Ok(())
         })
-        .manage(app_state)
         .invoke_handler(tauri::generate_handler![
             // Inventory commands
             commands::search_products,

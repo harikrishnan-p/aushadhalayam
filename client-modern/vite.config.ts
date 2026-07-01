@@ -21,6 +21,11 @@ export default defineConfig({
   server: {
     port: 1420,
     strictPort: true,
+    watch: {
+      // Exclude Rust build output — Windows locks .exe files while running,
+      // causing Vite's FSWatcher to throw EBUSY on tauri dev.
+      ignored: ["**/src-tauri/**"],
+    },
   },
   build: {
     outDir: "dist",
