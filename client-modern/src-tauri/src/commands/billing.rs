@@ -330,10 +330,12 @@ pub async fn cancel_bill(
                       WHERE bill_id = ?1 AND is_deleted = 0;",
                 )
                 .map_err(|e| e.to_string())?;
-            stmt.query_map(rusqlite::params![bill_id], |r| Ok((r.get(0)?, r.get(1)?)))
+            let rows: Vec<(i64, i64)> = stmt
+                .query_map(rusqlite::params![bill_id], |r| Ok((r.get(0)?, r.get(1)?)))
                 .map_err(|e| e.to_string())?
                 .collect::<Result<_, rusqlite::Error>>()
-                .map_err(|e| e.to_string())?
+                .map_err(|e| e.to_string())?;
+            rows
         };
 
         for (batch_id, qty) in restores {

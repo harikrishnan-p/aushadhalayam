@@ -34,6 +34,10 @@ serde_json = "1"
 # Timestamping
 chrono = { version = "0.4", features = ["serde"] }
 
+# cookie 0.18.1 (pulled by tauri) calls time's Parsable::parse() with 1 arg,
+# but time 0.3.37 changed the signature to require 2 args. Pin below the break.
+time = ">=0.3, <0.3.37"
+
 # UUID v4 for device_id generation
 uuid = { version = "1", features = ["v4"] }
 
@@ -59,6 +63,10 @@ windows = { version = "0.58", features = [
     "Win32_Graphics_Printing",
     "Win32_System_Com",
     "Win32_Storage_FileSystem",
+    "Win32_Storage_Xps",           # StartDocA, EndDoc, StartPage, EndPage, DOCINFOA
+    "Win32_System_IO",             # WriteFile (OVERLAPPED type)
+    "Win32_Security",              # CreateFileA (SECURITY_ATTRIBUTES param)
+    "Win32_System_WindowsProgramming", # MulDiv
 ] }
 
 # ─────────────────────────────────────────────────────────────────────────────

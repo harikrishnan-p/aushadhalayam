@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="spineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0a192f" />
+      <stop offset="25%" stop-color="#172a45" />
+      <stop offset="75%" stop-color="#1f3a60" />
+      <stop offset="100%" stop-color="#0f1e33" />
+    </linearGradient>
+
+    <filter id="layerShadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="#000000" flood-opacity="0.25" />
+    </filter>
+    
+    <filter id="bookShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#000000" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <g filter="url(#bookShadow)" transform="translate(14, 0)">
+    
+    <rect x="390" y="110" width="24" height="42" rx="8" fill="#4caf50" />
+    <rect x="390" y="164" width="24" height="46" rx="8" fill="#ffb300" />
+    <rect x="390" y="222" width="24" height="44" rx="8" fill="#29b6f6" />
+
+    <rect x="110" y="70" width="290" height="354" rx="28" fill="#dcdcdc" />
+    <rect x="112" y="70" width="284" height="350" rx="26" fill="#f5f5f5" />
+    <line x1="130" y1="412" x2="386" y2="412" stroke="#b0bec5" stroke-width="2" />
+    <line x1="130" y1="415" x2="386" y2="415" stroke="#cfd8dc" stroke-width="1.5" />
+    <line x1="130" y1="418" x2="386" y2="418" stroke="#cfd8dc" stroke-width="1" />
+
+    <path d="M146 400 h34 v45 l-17 -10 l-17 10 z" fill="#d32f2f" />
+    <path d="M146 400 h17 v40 l-17 -7 z" fill="#b71c1c" opacity="0.3" />
+
+    <rect x="144" y="66" width="250" height="346" rx="24" fill="#ffffff" filter="url(#layerShadow)" />
+    <rect x="152" y="74" width="234" height="330" rx="18" fill="none" stroke="#eceff1" stroke-width="2" />
+
+    <rect x="102" y="66" width="46" height="354" rx="20" fill="url(#spineGrad)" />
+    <rect x="142" y="66" width="6" height="354" fill="#0a192f" opacity="0.4" /> <circle cx="272" cy="220" r="86" fill="none" stroke="#e53935" stroke-width="5" />
+    
+    <rect x="216" y="200" width="112" height="40" rx="6" fill="#e53935" />
+    <rect x="252" y="164" width="40" height="112" rx="6" fill="#e53935" />
+    
+    <rect x="218" y="202" width="108" height="36" rx="4" fill="#f44336" opacity="0.15" />
+
+    <line x1="206" y1="334" x2="338" y2="334" stroke="#cfd8dc" stroke-width="6" stroke-linecap="round" />
+    <line x1="206" y1="352" x2="296" y2="352" stroke="#cfd8dc" stroke-width="5" stroke-linecap="round" />
+
+  </g>
+</svg>

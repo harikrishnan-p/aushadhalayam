@@ -14,7 +14,7 @@
 // Circuit breaker → rows with retry_count >= 5 are skipped until manual reset
 // =============================================================================
 
-use crate::state::{AppState, SyncTrigger};
+use crate::state::SyncTrigger;
 use anyhow::Result;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;

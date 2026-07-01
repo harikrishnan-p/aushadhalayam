@@ -10,10 +10,7 @@
 
 use serde::Deserialize;
 
-#[cfg(target_os = "windows")]
-mod windows_gdi;
-#[cfg(target_os = "android")]
-mod android_net;
+// platform modules are defined inline below
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared types
@@ -182,8 +179,8 @@ pub fn build_escpos(job: &PrintJob, col_width: usize, cut: bool) -> Vec<u8> {
 mod windows_gdi {
     use super::{PrintJob, PrinterConfig};
     use windows::Win32::Graphics::Gdi::*;
-    use windows::Win32::Graphics::Printing::*;
-    use windows::Win32::Foundation::BOOL;
+    use windows::Win32::Storage::Xps::*;
+    use windows::Win32::System::WindowsProgramming::MulDiv;
     use windows::core::PCSTR;
     use std::ffi::CString;
 
@@ -240,28 +237,29 @@ mod windows_gdi {
 
         let font = CreateFontA(
             -MulDiv(9, dpi_y, 72), 0, 0, 0, FW_NORMAL.0 as i32,
-            BOOL(0), BOOL(0), BOOL(0), ANSI_CHARSET.0 as u32,
+            0u32, 0u32, 0u32, ANSI_CHARSET.0 as u32,
             OUT_DEFAULT_PRECIS.0 as u32, CLIP_DEFAULT_PRECIS.0 as u32,
             DEFAULT_QUALITY.0 as u32, DEFAULT_PITCH.0 as u32 | FF_MODERN.0 as u32,
             PCSTR(b"Courier New\0".as_ptr()),
         );
         SelectObject(hdc, font);
 
-        let mut text = |s: &str| {
-            let cs = std::ffi::CString::new(s).unwrap_or_default();
-            TextOutA(hdc, x, y, PCSTR(cs.as_ptr() as *const u8), s.len() as i32);
-        };
-
-        text(&job.pharmacy_name);   y += line_h;
-        text(&job.pharmacy_address); y += line_h;
-        text(&format!("Bill: {} Date: {}", job.bill_number, job.bill_date)); y += line_h;
-
-        for item in &job.items {
-            text(&format!("{:<22}{:>4}{:>8.2}", item.product_name, item.quantity, item.line_total));
-            y += line_h;
+        macro_rules! out {
+            ($s:expr) => {
+                TextOutA(hdc, x, y, ($s).as_bytes());
+                y += line_h;
+            };
         }
 
-        text(&format!("Grand Total: INR {:.2}", job.grand_total));
+        out!(&job.pharmacy_name);
+        out!(&job.pharmacy_address);
+        out!(&format!("Bill: {} Date: {}", job.bill_number, job.bill_date));
+
+        for item in &job.items {
+            out!(&format!("{:<22}{:>4}{:>8.2}", item.product_name, item.quantity, item.line_total));
+        }
+
+        out!(&format!("Grand Total: INR {:.2}", job.grand_total));
 
         DeleteObject(font);
     }
