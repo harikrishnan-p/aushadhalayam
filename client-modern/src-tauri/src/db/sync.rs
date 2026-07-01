@@ -16,11 +16,11 @@
 
 use crate::state::SyncTrigger;
 use anyhow::Result;
+use rusqlite::Connection;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::time;
-use rusqlite::Connection;
 
 const MAX_RETRIES:    i32 = 5;
 const BATCH_SIZE:     usize = 50;
@@ -32,7 +32,9 @@ pub fn spawn_sync_agent(
     mut rx: UnboundedReceiver<SyncTrigger>,
     endpoint: String,
 ) {
-    tokio::spawn(async move {
+    // tauri::async_runtime::spawn works from any thread (including the setup
+    // callback on the main thread).  tokio::spawn panics outside a runtime.
+    tauri::async_runtime::spawn(async move {
         let mut interval = time::interval(POLL_INTERVAL);
         interval.set_missed_tick_behavior(time::MissedTickBehavior::Skip);
 
